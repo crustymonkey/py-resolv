@@ -7,3 +7,6 @@ class ReqError(Exception):
 
 class ResError(Exception):
     pass
+
+class MissingDataError(Exception):
+    pass
