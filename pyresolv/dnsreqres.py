@@ -4,6 +4,7 @@ __svnversion__ = '$Id$'
 
 import struct , random
 from errors import ReqError , ResError
+from cStringIO import StringIO
 from . import *
 
 __all__ = ['DnsRequest' , 'DnsResult']
@@ -18,7 +19,7 @@ the pydns library:  http://pydns.sourceforge.net
 class DnsRequest(object):
     def __init__(self , qname , qtype=QT_A , qclass=CL_IN , qr=0 , 
             opcode=OPC_QUERY , aa=0 , tc=0 , rd=1 , ra=0 , rcode=RCD_OK):
-        self.buf = ''
+        self.buf = StringIO()
         self.qname = qname
         self.qtype = int(qtype)
         self.qclass = int(qclass)
@@ -39,6 +40,30 @@ class DnsRequest(object):
         self._addHeader()
         self._addQuestion()
     
+    def __str__(self):
+        return self.getBuf()
+
+    def __del__(self):
+        try:
+            self.close()
+        except:
+            pass
+        
+    def getBuffer(self):
+        return self.getBuf()
+    
+    def getBuf(self):
+        return self.buf.getvalue()
+
+    def close(self):
+        """
+        Destroys the buffer for cleanup
+        """
+        try:
+            self.buf.close()
+        except:
+            pass
+    
     def _getId(self):
         return random.randint(0 , 65535)
     
@@ -52,36 +77,27 @@ class DnsRequest(object):
                 part = part.encode('utf8')
                 l = len(part)
                 if l > 63:
-                    raise ReqError , 'The length of part, %s, ' % part + \
-                            'is limited to 63 characters'
+                    raise ReqError('The length of part, %s, ' % part +
+                        'is limited to 63 characters')
                 ret += chr(l) + part
         ret += '\0'
         return ret
     
     def _addHeader(self):
-        self.buf += self._get16bit(self.id)
-        self.buf += self._get16bit((self.qr & 1) << 15 | 
+        self.buf.write(self._get16bit(self.id))
+        self.buf.write(self._get16bit((self.qr & 1) << 15 | 
                 (self.opcode & 15) << 11 | (self.aa & 1) << 10 |
                 (self.tc & 1) << 9 | (self.rd & 1) << 8 |
-                (self.ra & 1) << 7 | (self.z & 7) << 4 | (self.rcode & 15))
-        self.buf += self._get16bit(self.qdcount)
-        self.buf += self._get16bit(self.ancount)
-        self.buf += self._get16bit(self.nscount)
-        self.buf += self._get16bit(self.arcount)
+                (self.ra & 1) << 7 | (self.z & 7) << 4 | (self.rcode & 15)))
+        self.buf.write(self._get16bit(self.qdcount))
+        self.buf.write(self._get16bit(self.ancount))
+        self.buf.write(self._get16bit(self.nscount))
+        self.buf.write(self._get16bit(self.arcount))
         
     def _addQuestion(self):
-        self.buf += self._getName(self.qname)
-        self.buf += self._get16bit(self.qtype)
-        self.buf += self._get16bit(self.qclass)
-        
-    def getBuffer(self):
-        return self.buf
-    
-    def getBuf(self):
-        return self.buf
-    
-    def __str__(self):
-        return self.buf
+        self.buf.write(self._getName(self.qname))
+        self.buf.write(self._get16bit(self.qtype))
+        self.buf.write(self._get16bit(self.qclass))
 
 class DnsResult(object):
     def __init__(self , rawBuf):
@@ -110,7 +126,7 @@ class DnsResult(object):
             self._extractHeader()
             self._extractQuestion()
         except:
-            raise ResError , 'Invalid DNS result'
+            raise ResError('Invalid DNS result')
         # Convenience Error stuff
         self.errno = self.rcode
         self.error = self._getErrStr()
@@ -121,7 +137,7 @@ class DnsResult(object):
                 self._extractData(self.nscount , self.authority)
                 self._extractData(self.arcount , self.additional)
             except:
-                raise ResError , 'Invalid DNS result'
+                raise ResError('Invalid DNS result')
         
     def _get16bit(self , s=None):
         if s == None:
@@ -257,8 +273,8 @@ class DnsResult(object):
                     ipv6 += ':'
             return ipv6
         else:
-            raise ReqError , 'Unsupported query type for domain %s: %d' % \
-                    (self.qname , qtype)
+            raise ReqError('Unsupported query type for domain %s: %d' % 
+                    (self.qname , qtype))
         
     def _extractHeader(self):
         self.id = self._get16bit()
