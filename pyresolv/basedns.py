@@ -28,11 +28,13 @@ class BaseDNS(object):
                                 is empty
         useFirstResolver:bool   Just use the first resolver in the
                                 list of resolvers either passed in
-                                or in the resolv.conf file
+                                or in the resolv.conf file.  Do not
+                                try anything else.
         """
         self.defTO = defaultTimeout
         self.resolvers = resolvers
         self.resolvConf = resolvConf
+        self.useFirst = useFirstResolver
         # list for requests
         self._reqs = []
         if not self.resolvers:
@@ -87,5 +89,3 @@ class BaseDNS(object):
         error, it's invalid
         """
         return self._validIp(ip , socket.AF_INET6)
-
-
