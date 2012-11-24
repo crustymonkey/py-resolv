@@ -35,6 +35,8 @@ class BaseDNS(object):
         self.resolvers = resolvers
         self.resolvConf = resolvConf
         self.useFirst = useFirstResolver
+        # Map for resolver IP to address family
+        self._resvMap = {}
         # list for requests
         self._reqs = []
         if not self.resolvers:
@@ -60,13 +62,21 @@ class BaseDNS(object):
         Make sure all the resolvers are valid IP addresses
         """
         for r in self.resolvers[:]:
-            if RE_IPV4.match(r) and not self._validIpv4(r):
-                # We have an invalid IPv4 addr, remove it from the
-                # resolver list
-                self.resolvers.remove(r)
+            if RE_IPV4.match(r):
+                if self._validIpv4(r):
+                    # Map to an AF_INET
+                    self._resvMap[r] = socket.AF_INET
+                else:
+                    # We have an invalid IPv4 addr, remove it from the
+                    # resolver list
+                    self.resolvers.remove(r)
             else:
                 # We should have an IPv6 addr, validate it
-                if not self._validIpv6(r):
+                if self._validIpv6(r):
+                    # Map to an AF_INET
+                    self._resvMap[r] = socket.AF_INET6
+                else:
+                    # Remove an invalid IPv6 addr
                     self.resolvers.remove(r)
 
     def _validIp(self , ip , family):
