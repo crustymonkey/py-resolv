@@ -60,6 +60,8 @@ class DNS(BaseDNS):
             # Send the request to all resolvers
             sock = self._getSock(resolver , timeout)
             sock.sendall(req.getBuf())
+            # Close the buffer and free the memory used
+            req.close()
             fd = sock.fileno()
             p.register(fd , mask)
             fdMap[fd] = sock
