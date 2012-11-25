@@ -39,6 +39,7 @@ QT_AXFR = 252
 QT_MAILB = 253
 QT_MAILA = 254  # Obsolete, see MX
 QT_ALL = 255
+QT_ANY = QT_ALL # just an alias
 
 # Classes
 CL_IN = 1
