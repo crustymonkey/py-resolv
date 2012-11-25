@@ -138,6 +138,12 @@ class DnsResult(object):
                 self._extractData(self.arcount , self.additional)
             except:
                 raise ResError('Invalid DNS result')
+
+    def __str__(self):
+        return repr(self.answers)
+
+    def __repr__(self):
+        return repr(self.answers)
         
     def _get16bit(self , s=None):
         if s == None:
@@ -307,9 +313,6 @@ class DnsResult(object):
             rawData = self._getBytes(rdlen)
             data = self._procRawData(rawData , qtype , cl)
             l.append((name , qtype , cl , ttl , data))
-            
-    def __str__(self):
-        return repr(self.answers)
 
 def test():
     import socket , time , sys
