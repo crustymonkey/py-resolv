@@ -56,7 +56,7 @@ class BaseDNS(object):
 
         query:str       The actual item you are looking up, such as
                         "google.com" qtype:int       
-                        This should be one of the constants starting
+        qtype:int       This should be one of the constants starting
                         with QT_  These are imported at all levels
         timeout:float   This should be a timeout in seconds.
                         defaultTimeout will be used if not specified
