@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-__svnversion__ = '$Id$'
-
 import struct , random
 from errors import ReqError , ResError
 from cStringIO import StringIO
@@ -17,8 +15,27 @@ the pydns library:  http://pydns.sourceforge.net
 """
 
 class DnsRequest(object):
+    """
+    The DNS Request class supports any/all options as defined in RFC 1035
+    Most of the options here will not be used, but they are available
+    for any kind of advanced experimentation you wish to perform.
+    """
     def __init__(self , qname , qtype=QT_A , qclass=CL_IN , qr=0 , 
             opcode=OPC_QUERY , aa=0 , tc=0 , rd=1 , ra=0 , rcode=RCD_OK):
+        """
+        There are many options here that can be set.  Most are not
+        actually used in a request, but must be present in the
+        packet structure.  See RFC 1035 for an explanation of all
+        items.  I will only be covering the usefull ones here.
+
+        qname:str       The actual item you are looking up, such as
+                        "google.com" qtype:int       
+        qtype:int       This should be one of the constants starting
+                        with QT_  These are imported at all levels
+        opcode:int      A flag for originator of the query.  Use
+                        one of the OPC_ constants
+        rd:int          A flag (0 or 1) whether recursion is desired
+        """
         self.buf = StringIO()
         self.qname = qname
         self.qtype = int(qtype)
@@ -100,6 +117,53 @@ class DnsRequest(object):
         self.buf.write(self._get16bit(self.qclass))
 
 class DnsResult(object):
+    """
+    This instance will contain all of the information contained 
+    in a DNS result packet including all flags set.  See RFC 1035 
+    for all of the flag and code explanations.
+
+    The stuff you will be most interested in are the following 3 
+    lists.  These are *always* lists as you will often have more
+    than one item returned for a lookup:
+
+    DnsResult.answers
+    DnsResult.authority
+    DnsResult.additional
+
+    Note that, depending on the behavior of your resolver, you may
+    not have an authority or additional section in the response.
+
+    Each result in each of the lists will be a tuple in the
+    following format:
+        
+        (question:str ,      # The question, ex: "google.com"
+         questionType:int ,  # The question type int from the QT_*
+                             # constants.  QT_A (1) for an A record, 
+                             # etc.
+         questionClass:int , # The class of the question, which will
+                             # almost always be CL_IN (1) (internet 
+                             # class)
+         TTL:int ,           # The record's TTL
+         answer:varies)      # The answer.  Can be a string or tuple.
+                             # See below for more info
+
+    Answers can vary in their type.  For example, an A record will
+    return a string containing the IP address that was looked up.
+    However you will get a tuple of items for an MX or SOA lookup.
+
+    Here's a table of the most common lookups and their answers:
+
+        A, CNAME, NS, PTR, TXT , AAAA: string containing the answer
+        MX: A tuple of (mxPriority:int , CNAME:str)
+        SOA: A tuple containing the parts of an SOA:
+            (SOA:str ,       # The SOA name
+             contact:str ,   # Contact email
+             serial:int ,    # Serial number
+             refresh:int ,   # Refresh time
+             retry:int ,     # Retry time
+             expire:int ,    # Expire time 
+             minTTL:int)     # Min TTL, or these days, negative cache time
+    """
     def __init__(self , rawBuf):
         self.rawBuf = rawBuf
         self._bp = 0    # Pointer to keep track of current location in buf
