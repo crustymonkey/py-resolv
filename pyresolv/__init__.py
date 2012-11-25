@@ -47,3 +47,5 @@ CL_CH = 3
 CL_HS = 4
 CL_ANY = 255
 
+from dns import DNS
+#from adns import ADNS
