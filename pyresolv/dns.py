@@ -55,7 +55,7 @@ class DNS(BaseDNS):
         timeout = float(timeout)
         mask = select.EPOLLIN | select.EPOLLPRI
         fdMap = {}
-        p = select.epoll()
+        p = select.poll()
         for resolver in self.resolvers:
             # Send the request to all resolvers
             sock = self._getSock(resolver , timeout)
