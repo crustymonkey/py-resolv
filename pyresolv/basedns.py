@@ -60,7 +60,8 @@ class BaseDNS(object):
                         with QT_  These are imported at all levels
         timeout:float   This should be a timeout in seconds.
                         defaultTimeout will be used if not specified
-                        here
+                        here.  Only the default timeout will be used
+                        if you are using the ADNS class
         opcode:int      A flag for originator of the query.  Use
                         one of the OPC_ constants
         rd:int          A flag (0 or 1) whether recursion is desired
@@ -68,7 +69,9 @@ class BaseDNS(object):
         # Get a request object
         req = drr.DnsRequest(query , qtype=qtype , qclass=qclass , 
             opcode=opcode , rd=rd)
-        if timeout is None:
+        if timeout is None or self.__class__.__name__ == 'ADNS':
+            # We use the default timeout if not specified, or always with
+            # the ADNS version
             timeout = self.defTO
         return self._doLookup(req , timeout)
 
