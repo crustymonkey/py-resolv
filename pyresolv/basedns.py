@@ -49,7 +49,7 @@ class BaseDNS(object):
                 'resolver IP to use')
 
     def lookup(self , query , qtype=QT_A , timeout=None , qclass=CL_IN , 
-            opcode=OPC_QUERY , rd=1):
+            opcode=OPC_QUERY , rd=1 , callback=None):
         """
         Perform a lookup and return a dnsreqres.DnsResult object.  If 
         you want more information on the options, see RFC 1035
@@ -65,6 +65,8 @@ class BaseDNS(object):
         opcode:int      A flag for originator of the query.  Use
                         one of the OPC_ constants
         rd:int          A flag (0 or 1) whether recursion is desired
+        callback:func   The callback function to use.  This is only
+                        relevant when using async
         """
         # Get a request object
         req = drr.DnsRequest(query , qtype=qtype , qclass=qclass , 
@@ -73,59 +75,62 @@ class BaseDNS(object):
             # We use the default timeout if not specified, or always with
             # the ADNS version
             timeout = self.defTO
-        return self._doLookup(req , timeout)
+        return self._doLookup(req , timeout , callback=callback)
 
-    def a(self , query):
+    def a(self , query , callback=None):
         """
         Shortcut to lookup an A record
-        """
-        return self.lookup(query)
 
-    def aaaa(self , query):
+        callback:func   The callback function to use.  This is only
+                        relevant when using async
+        """
+        return self.lookup(query , callback=callback)
+
+    def aaaa(self , query , callback=None):
         """
         Shortcut to lookup a AAAA record (ipv6)
         """
-        return self.lookup(query , QT_AAAA)
+        return self.lookup(query , QT_AAAA , callback=callback)
 
-    def cname(self , query):
+    def cname(self , query , callback=None):
         """
         Shortcut to lookup a CNAME record
         """
-        return self.lookup(query , QT_CNAME)
+        return self.lookup(query , QT_CNAME , callback=callback)
 
-    def mx(self , query):
+    def mx(self , query , callback=None):
         """
         Shortcut to lookup an MX record
         """
-        return self.lookup(query , QT_MX)
+        return self.lookup(query , QT_MX , callback=callback)
 
-    def txt(self , query):
+    def txt(self , query , callback=None):
         """
         Shortcut to lookup a TXT record
         """
-        return self.lookup(query , QT_TXT)
+        return self.lookup(query , QT_TXT , callback=callback)
 
-    def soa(self , query):
+    def soa(self , query , callback=None):
         """
         Shortcut to lookup an SOA record
         """
-        return self.lookup(query , QT_SOA)
+        return self.lookup(query , QT_SOA , callback=callback)
 
-    def ns(self , query):
+    def ns(self , query , callback=None):
         """
         Shortcut to lookup an NS record
         """
-        return self.lookup(query , QT_NS)
+        return self.lookup(query , QT_NS , callback=callback)
 
-    def ptr(self , query):
+    def ptr(self , query , callback=None):
         """
         Shortcut to lookup a PTR record.  Note that this expects the
         query to be in the form of x.x.x.x.in-addr.arpa  Use "reverse()"
         to just use an IP addr instead
         """
-        return self.lookup(query , QT_PTR)
+        return self.lookup(query , QT_PTR , callback=callback)
 
-    def reverse(self , query):
+    def reverse(self , query , callback=None):
         """
         Your query here can be just an ip address, either v4 or v6 and
         the reversing of the address and domain will be appended
@@ -152,19 +157,19 @@ class BaseDNS(object):
             bl.append(str(ord(i)))
         # Get the arpa str to lookup
         realQ = '%s.%s' % ('.'.join(bl) , suffix)
-        return self.ptr(realQ)
+        return self.ptr(realQ , callback=callback)
 
-    def axfr(self , query):
+    def axfr(self , query , callback=None):
         """
         Shortcut to do an AXFR lookup
         """
-        return self.lookup(query , QT_AXFR)
+        return self.lookup(query , QT_AXFR , callback=callback)
 
-    def any(self , query):
+    def any(self , query , callback=None):
         """
         Shortcut to do an ANY (ALL) query
         """
-        return self.lookup(query , QT_ALL)
+        return self.lookup(query , QT_ALL , callback=callback)
 
     def _getSock(self , resolver , timeout):
         s = socket.socket(socket.AF_INET , socket.SOCK_DGRAM)
@@ -225,6 +230,6 @@ class BaseDNS(object):
         """
         return self._validIp(ip , socket.AF_INET6)
 
-    def _doLookup(self):
+    def _doLookup(self , callback=None):
         # This MUST be overridden in a subclass
         raise NotImplementedError('You must override this in a subclass')
