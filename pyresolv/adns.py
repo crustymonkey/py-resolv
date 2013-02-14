@@ -32,7 +32,6 @@ class ADNS(BaseDNS , threading.Thread):
         # Die when the program ends
         self.daemon = True
         # Create a close event for the main event loop
-        self._defTO = defaultTimeout
         self._close = threading.Event()
         self._socks = []
         self._openSockets()
@@ -52,7 +51,7 @@ class ADNS(BaseDNS , threading.Thread):
             p.register(fd , pMask)
             fdMap[fd] = s
         # Start the main loop
-        while True:
+        while not self._close.isSet():
             new = None
             # Get any new lookups
             try:
@@ -75,8 +74,15 @@ class ADNS(BaseDNS , threading.Thread):
                     logging.warning('Found non-matching id in '
                         'result, dropping: %s' % res.id)
                     continue
-                cb = reqMap[res.id][2]
-                cb(res)
+                cb , kwargs = reqMap[res.id][2:]
+                t = threading.Thread(target=cb , args=(res,) , 
+                    kwargs=kwargs)
+                # Don't block shutdown
+                t.daemon = True
+                t.start()
+        # Cleanup
+        for s in self._socks:
+            s.close()
 
     def close(self):
         """
@@ -87,10 +93,10 @@ class ADNS(BaseDNS , threading.Thread):
     def _openSockets(self):
         for resolver in self.resolvers:
             # Get a socket connection for each resolver
-            self._socks.append(self._getSock(resolver , self._defTO))
+            self._socks.append(self._getSock(resolver , self.defTO))
             if self.useFirst: break
 
-    def _doLookup(self , req , timeout , callback=None):
+    def _doLookup(self , req , timeout , callback=None , **kwargs):
         if not self._close.isSet():
             # Add a tuple of (req , timeout , callback) to the queue
-            self._q.put((req , timeout , callback))
+            self._q.put((req , timeout , callback , kwargs))

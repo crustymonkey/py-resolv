@@ -46,7 +46,7 @@ class DNS(BaseDNS):
             ret.append((req , res))
         return ret
 
-    def _doLookup(self , req , timeout , callback=None):
+    def _doLookup(self , req , timeout , callback=None , **kwargs):
         """
         Performs the actual lookup(s), handling all the socket 
         connections

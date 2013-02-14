@@ -49,7 +49,7 @@ class BaseDNS(object):
                 'resolver IP to use')
 
     def lookup(self , query , qtype=QT_A , timeout=None , qclass=CL_IN , 
-            opcode=OPC_QUERY , rd=1 , callback=None):
+            opcode=OPC_QUERY , rd=1 , callback=None , **kwargs):
         """
         Perform a lookup and return a dnsreqres.DnsResult object.  If 
         you want more information on the options, see RFC 1035
@@ -66,7 +66,9 @@ class BaseDNS(object):
                         one of the OPC_ constants
         rd:int          A flag (0 or 1) whether recursion is desired
         callback:func   The callback function to use.  This is only
-                        relevant when using async
+                        relevant when using async.  You can also set
+                        arbitrary keyword arguments that will be 
+                        passed on to the callback
         """
         # Get a request object
         req = drr.DnsRequest(query , qtype=qtype , qclass=qclass , 
@@ -75,66 +77,108 @@ class BaseDNS(object):
             # We use the default timeout if not specified, or always with
             # the ADNS version
             timeout = self.defTO
-        return self._doLookup(req , timeout , callback=callback)
+        return self._doLookup(req , timeout , callback=callback , **kwargs)
 
-    def a(self , query , callback=None):
+    def a(self , query , callback=None , **kwargs):
         """
         Shortcut to lookup an A record
 
         callback:func   The callback function to use.  This is only
-                        relevant when using async
+                        relevant when using async.  You can set 
+                        arbitrary keyword args that will also be
+                        passed to the callback
         """
-        return self.lookup(query , callback=callback)
+        return self.lookup(query , callback=callback , **kwargs)
 
-    def aaaa(self , query , callback=None):
+    def aaaa(self , query , callback=None , **kwargs):
         """
         Shortcut to lookup a AAAA record (ipv6)
-        """
-        return self.lookup(query , QT_AAAA , callback=callback)
 
-    def cname(self , query , callback=None):
+        callback:func   The callback function to use.  This is only
+                        relevant when using async.  You can set 
+                        arbitrary keyword args that will also be
+                        passed to the callback
+        """
+        return self.lookup(query , QT_AAAA , callback=callback , **kwargs)
+
+    def cname(self , query , callback=None , **kwargs):
         """
         Shortcut to lookup a CNAME record
-        """
-        return self.lookup(query , QT_CNAME , callback=callback)
 
-    def mx(self , query , callback=None):
+        callback:func   The callback function to use.  This is only
+                        relevant when using async.  You can set 
+                        arbitrary keyword args that will also be
+                        passed to the callback
+        """
+        return self.lookup(query , QT_CNAME , callback=callback , **kwargs)
+
+    def mx(self , query , callback=None , **kwargs):
         """
         Shortcut to lookup an MX record
-        """
-        return self.lookup(query , QT_MX , callback=callback)
 
-    def txt(self , query , callback=None):
+        callback:func   The callback function to use.  This is only
+                        relevant when using async.  You can set 
+                        arbitrary keyword args that will also be
+                        passed to the callback
+        """
+        return self.lookup(query , QT_MX , callback=callback , **kwargs)
+
+    def txt(self , query , callback=None , **kwargs):
         """
         Shortcut to lookup a TXT record
-        """
-        return self.lookup(query , QT_TXT , callback=callback)
 
-    def soa(self , query , callback=None):
+        callback:func   The callback function to use.  This is only
+                        relevant when using async.  You can set 
+                        arbitrary keyword args that will also be
+                        passed to the callback
+        """
+        return self.lookup(query , QT_TXT , callback=callback , **kwargs)
+
+    def soa(self , query , callback=None , **kwargs):
         """
         Shortcut to lookup an SOA record
-        """
-        return self.lookup(query , QT_SOA , callback=callback)
 
-    def ns(self , query , callback=None):
+        callback:func   The callback function to use.  This is only
+                        relevant when using async.  You can set 
+                        arbitrary keyword args that will also be
+                        passed to the callback
+        """
+        return self.lookup(query , QT_SOA , callback=callback , **kwargs)
+
+    def ns(self , query , callback=None , **kwargs):
         """
         Shortcut to lookup an NS record
-        """
-        return self.lookup(query , QT_NS , callback=callback)
 
-    def ptr(self , query , callback=None):
+        callback:func   The callback function to use.  This is only
+                        relevant when using async.  You can set 
+                        arbitrary keyword args that will also be
+                        passed to the callback
+        """
+        return self.lookup(query , QT_NS , callback=callback , **kwargs)
+
+    def ptr(self , query , callback=None , **kwargs):
         """
         Shortcut to lookup a PTR record.  Note that this expects the
         query to be in the form of x.x.x.x.in-addr.arpa  Use "reverse()"
         to just use an IP addr instead
-        """
-        return self.lookup(query , QT_PTR , callback=callback)
 
-    def reverse(self , query , callback=None):
+        callback:func   The callback function to use.  This is only
+                        relevant when using async.  You can set 
+                        arbitrary keyword args that will also be
+                        passed to the callback
+        """
+        return self.lookup(query , QT_PTR , callback=callback , **kwargs)
+
+    def reverse(self , query , callback=None , **kwargs):
         """
         Your query here can be just an ip address, either v4 or v6 and
         the reversing of the address and domain will be appended
         and looked up for you automatically
+
+        callback:func   The callback function to use.  This is only
+                        relevant when using async.  You can set 
+                        arbitrary keyword args that will also be
+                        passed to the callback
         """
         family = socket.AF_INET
         suffix = 'in-addr.arpa'
@@ -157,19 +201,29 @@ class BaseDNS(object):
             bl.append(str(ord(i)))
         # Get the arpa str to lookup
         realQ = '%s.%s' % ('.'.join(bl) , suffix)
-        return self.ptr(realQ , callback=callback)
+        return self.ptr(realQ , callback=callback , **kwargs)
 
-    def axfr(self , query , callback=None):
+    def axfr(self , query , callback=None , **kwargs):
         """
         Shortcut to do an AXFR lookup
-        """
-        return self.lookup(query , QT_AXFR , callback=callback)
 
-    def any(self , query , callback=None):
+        callback:func   The callback function to use.  This is only
+                        relevant when using async.  You can set 
+                        arbitrary keyword args that will also be
+                        passed to the callback
+        """
+        return self.lookup(query , QT_AXFR , callback=callback , **kwargs)
+
+    def any(self , query , callback=None , **kwargs):
         """
         Shortcut to do an ANY (ALL) query
+
+        callback:func   The callback function to use.  This is only
+                        relevant when using async.  You can set 
+                        arbitrary keyword args that will also be
+                        passed to the callback
         """
-        return self.lookup(query , QT_ALL , callback=callback)
+        return self.lookup(query , QT_ALL , callback=callback , **kwargs)
 
     def _getSock(self , resolver , timeout):
         s = socket.socket(socket.AF_INET , socket.SOCK_DGRAM)
@@ -230,6 +284,6 @@ class BaseDNS(object):
         """
         return self._validIp(ip , socket.AF_INET6)
 
-    def _doLookup(self , callback=None):
+    def _doLookup(self , callback=None , **kwargs):
         # This MUST be overridden in a subclass
         raise NotImplementedError('You must override this in a subclass')
